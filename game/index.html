@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VELVET VAULT — The Meridian Museum Heist</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0c12; color: #e8e6df; font-family: Georgia, 'Times New Roman', serif; }
+  #stage { position: relative; width: 1280px; height: 800px; margin: 0 auto; }
+  canvas#game { display: block; width: 1280px; height: 800px; background: #171a24; }
+  .hud { position: absolute; font-size: 12px; line-height: 1.35; }
+  .panel { background: rgba(10, 12, 20, 0.88); border: 1px solid #d4af37; border-radius: 6px; padding: 8px 10px; }
+  .panel h3 { color: #d4af37; font-size: 11px; letter-spacing: 2px; margin-bottom: 5px; }
+  /* Top bar: title, room, timer, loot, alarm. */
+  #hud-top { top: 0; left: 0; right: 0; height: 64px; display: flex; align-items: stretch; gap: 8px; padding: 6px 8px; pointer-events: none; }
+  #hud-top .panel { display: flex; flex-direction: column; justify-content: center; }
+  .brand { min-width: 190px; }
+  .brand b { color: #ffe066; font-size: 16px; letter-spacing: 2px; }
+  .brand span { color: #a8b0c0; font-size: 10px; }
+  #hud-room { color: #7fd4c1; font-weight: bold; font-size: 13px; }
+  .stat { min-width: 86px; text-align: center; }
+  .stat b { display: block; font-size: 16px; color: #fff; }
+  .stat span { color: #a8b0c0; font-size: 10px; letter-spacing: 1px; }
+  .alarm-box { flex: 1; }
+  .alarm-row { display: flex; align-items: center; gap: 8px; }
+  .alarm-bar { flex: 1; height: 16px; background: #1a1e2a; border: 1px solid #555; border-radius: 8px; overflow: hidden; }
+  .alarm-fill { height: 100%; width: 0%; background: #2ecc71; transition: width 0.2s; }
+  .alarm-fill.warn { background: #f1c40f; }
+  .alarm-fill.high { background: #e67e22; }
+  .alarm-fill.crit { background: #e74c3c; }
+  #hud-alarm-pct { font-weight: bold; font-size: 15px; min-width: 42px; text-align: right; }
+  #hud-alarm-label { color: #ffb3b3; font-size: 10px; letter-spacing: 2px; }
+  /* Left panel: objectives + handler. */
+  #hud-left { top: 72px; left: 8px; width: 218px; }
+  #hud-objectives { list-style: none; }
+  #hud-objectives li { padding: 2px 0; color: #d8d4c8; }
+  #hud-objectives li.done { color: #7fd4c1; text-decoration: line-through; }
+  #hud-handler { margin-top: 8px; padding-top: 6px; border-top: 1px solid #444; color: #ffd94a; font-style: italic; font-size: 11px; }
+  /* Right panel: tools + guard board. */
+  #hud-right { top: 72px; right: 8px; width: 232px; }
+  .tool { padding: 3px 0; border-bottom: 1px solid #222; }
+  .tool b { color: #ffe066; }
+  .tool.empty { opacity: 0.45; }
+  .tool .charges { color: #7fd4c1; letter-spacing: 1px; }
+  .tool .note { display: block; color: #a8b0c0; font-size: 10px; }
+  .guard { padding: 2px 0; }
+  .guard b { color: #cfe0ff; }
+  .guard.susp { color: #ffa028; }
+  .guard.hunt { color: #ff5a3c; font-weight: bold; }
+  .guard .det { float: right; color: #a8b0c0; }
+  /* Bottom bar: minimap + status + controls. */
+  #hud-bottom { bottom: 0; left: 0; right: 0; height: 112px; display: flex; gap: 8px; padding: 6px 8px; pointer-events: none; }
+  #hud-bottom .panel { display: flex; flex-direction: column; justify-content: center; }
+  .map-box { width: 184px; align-items: center; }
+  #hud-minimap { border: 1px solid #444; }
+  .status-box { flex: 1; }
+  #hud-status { font-size: 14px; font-weight: bold; color: #ffe066; }
+  .controls { color: #a8b0c0; font-size: 11px; margin-top: 4px; }
+  .controls b { color: #e8e6df; }
+  /* Center banner. */
+  .banner { top: 84px; left: 50%; transform: translateX(-50%); background: rgba(10,12,20,0.92); border: 1px solid #ffe066; color: #ffe066; padding: 8px 18px; border-radius: 6px; font-size: 15px; font-weight: bold; display: none; white-space: nowrap; }
+  .banner.show { display: block; }
+  /* Menu / end overlays. */
+  .overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(8, 10, 16, 0.82); text-align: center; z-index: 5; }
+  .overlay h1 { color: #ffe066; font-size: 44px; letter-spacing: 6px; margin-bottom: 8px; }
+  .overlay h2 { color: #d4af37; font-size: 16px; letter-spacing: 3px; margin-bottom: 16px; }
+  .overlay p { max-width: 560px; color: #d8d4c8; font-size: 14px; line-height: 1.6; margin-bottom: 12px; }
+  .overlay button { pointer-events: auto; background: #d4af37; color: #14100a; border: none; border-radius: 6px; padding: 12px 28px; font-size: 16px; font-weight: bold; font-family: Georgia, serif; cursor: pointer; letter-spacing: 1px; }
+  .overlay button:hover { background: #ffe066; }
+  #menu { display: flex; }
+  #end { display: none; }
+  #selftest-result { position: absolute; left: -9999px; top: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="1280" height="800"></canvas>
+
+  <div id="hud-top" class="hud">
+    <div class="panel brand"><b>VELVET VAULT</b><span>The Meridian Museum Heist — Wren</span></div>
+    <div class="panel"><span id="hud-room">ROOM 1 — LOBBY</span><span style="color:#a8b0c0;font-size:10px">3 rooms · steal the Aurum Star · get out</span></div>
+    <div class="panel stat"><b id="hud-timer">0:00</b><span>HEIST TIME</span></div>
+    <div class="panel stat"><b id="hud-loot">$0</b><span id="hud-loot-count">0/3 pieces</span></div>
+    <div class="panel alarm-box">
+      <div class="alarm-row">
+        <span style="color:#ffb3b3;font-weight:bold;letter-spacing:1px">ALARM</span>
+        <div class="alarm-bar"><div id="hud-alarm-fill" class="alarm-fill"></div></div>
+        <span id="hud-alarm-pct">0%</span>
+      </div>
+      <span id="hud-alarm-label">QUIET</span>
+    </div>
+  </div>
+
+  <div id="hud-left" class="hud panel">
+    <h3>◆ CREW — OBJECTIVES</h3>
+    <ul id="hud-objectives"></ul>
+    <div id="hud-handler"></div>
+  </div>
+
+  <div id="hud-right" class="hud panel">
+    <h3>◆ TOOLS — PRESS 1 / 2 / 3</h3>
+    <div id="hud-tools"></div>
+    <h3 style="margin-top:8px">◆ WARDENS &amp; CAMERAS</h3>
+    <div id="hud-guards"></div>
+  </div>
+
+  <div id="hud-banner" class="hud banner"></div>
+
+  <div id="hud-bottom" class="hud">
+    <div class="panel map-box"><h3 style="align-self:flex-start">◆ MINIMAP</h3><canvas id="hud-minimap" width="168" height="104"></canvas></div>
+    <div class="panel status-box">
+      <div id="hud-status">MOVING — stay out of the cones</div>
+      <div class="controls"><b>WASD / arrows</b> move &nbsp;·&nbsp; <b>Shift</b> sneak &nbsp;·&nbsp; <b>Click</b> walk to &nbsp;·&nbsp; <b>E</b> hold to lift loot &nbsp;·&nbsp; <b>1</b> EMP &nbsp;·&nbsp; <b>2</b> Smoke &nbsp;·&nbsp; <b>3</b> Lockpick</div>
+    </div>
+  </div>
+
+  <div id="menu" class="overlay">
+    <h1>VELVET VAULT</h1>
+    <h2>THE MERIDIAN MUSEUM HEIST — STARRING WREN</h2>
+    <p>You are Wren, the thief the Meridian never saw coming. Three rooms stand between you and the Aurum Star — a $5,000 gem on a laser-guarded pedestal. Wardens patrol with sweeping vision cones. Cameras sweep the halls. The alarm meter is always watching.</p>
+    <p>Lift the loot, pick the Star's lock, and reach the escape tunnel. Get caught and the Meridian keeps its gold — and you.</p>
+    <button id="start-btn">BEGIN THE HEIST</button>
+  </div>
+
+  <div id="end" class="overlay" style="display:none">
+    <h1 id="end-title">CLEAN GETAWAY</h1>
+    <h2 id="end-sub"></h2>
+    <p id="end-text"></p>
+    <button id="restart-btn">RUN IT AGAIN</button>
+  </div>
+
+  <div id="selftest-result"></div>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
