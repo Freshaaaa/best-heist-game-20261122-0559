@@ -12,6 +12,7 @@ const TILE = 40;
 export function render(ctx, game, now) {
   const level = game.level;
   drawFloor(ctx, level);
+  drawDecor(ctx, level);
   drawExit(ctx, level.exit, game);
   drawLasers(ctx, level.lasers, now);
   drawCover(ctx, level.cover);
@@ -28,10 +29,11 @@ export function render(ctx, game, now) {
 
 function drawFloor(ctx, level) {
   // Warm marble floor, bright enough to read at a glance on a contact
-  // sheet, with a clear tile grid.
-  ctx.fillStyle = '#33374a';
+  // sheet, with a clear tile grid. (Brightened again for v2: v1's floor
+  // still read as an empty dark grid once the HUD covered the edges.)
+  ctx.fillStyle = '#3f435c';
   ctx.fillRect(0, 0, 1280, 800);
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.14)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = TILE; x < 1280; x += TILE) { ctx.moveTo(x, 0); ctx.lineTo(x, 800); }
@@ -43,17 +45,86 @@ function drawFloor(ctx, level) {
   ctx.fillStyle = 'rgba(212, 175, 55, 0.6)';
   ctx.fillRect(596, 24, 4, 752);
   ctx.fillRect(676, 24, 4, 752);
-  // Room name stencilled on the floor.
-  ctx.fillStyle = 'rgba(255,255,255,0.16)';
-  ctx.font = 'bold 54px Georgia, serif';
+  // Room name stencilled on the floor, in the clear band below the top
+  // bar (the old spot at y 760 sat behind the bottom HUD bar).
+  ctx.fillStyle = 'rgba(255,255,255,0.13)';
+  ctx.font = 'bold 40px Georgia, serif';
   ctx.textAlign = 'center';
-  ctx.fillText(level.name, 640, 760);
+  ctx.fillText(level.name, 640, 168);
   // Walls: lighter stone with a gold trim line.
-  ctx.fillStyle = '#4a5068';
+  ctx.fillStyle = '#565c78';
   for (const w of level.walls) ctx.fillRect(w.x, w.y, w.w, w.h);
   ctx.strokeStyle = '#d4af37';
   ctx.lineWidth = 2;
   ctx.strokeRect(12, 12, 1256, 776);
+}
+
+// Museum dressing (level.decor): framed paintings, rugs, wall sconces and
+// potted plants. Visual only — never blocks movement or sight, drawn right
+// after the floor so everything else paints over it.
+function drawDecor(ctx, level) {
+  if (!level.decor) return;
+  for (const d of level.decor) {
+    if (d.kind === 'painting') {
+      // Gold frame, coloured canvas, a pale highlight stripe.
+      ctx.fillStyle = '#8a6d2f';
+      ctx.fillRect(d.x - 3, d.y - 3, d.w + 6, d.h + 6);
+      ctx.fillStyle = d.color;
+      ctx.fillRect(d.x, d.y, d.w, d.h);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(d.x + 6, d.y + 5, d.w - 12, 5);
+      ctx.strokeStyle = '#ffe066';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(d.x - 3, d.y - 3, d.w + 6, d.h + 6);
+    } else if (d.kind === 'rug') {
+      ctx.fillStyle = 'rgba(120, 30, 45, 0.8)';
+      ctx.beginPath();
+      ctx.roundRect(d.x, d.y, d.w, d.h, 10);
+      ctx.fill();
+      ctx.strokeStyle = '#d4af37';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(d.x + 8, d.y + 8, d.w - 16, d.h - 16, 6);
+      ctx.stroke();
+      ctx.fillStyle = '#d4af37';
+      ctx.beginPath();
+      ctx.moveTo(d.x + d.w / 2, d.y + d.h / 2 - 14);
+      ctx.lineTo(d.x + d.w / 2 + 14, d.y + d.h / 2);
+      ctx.lineTo(d.x + d.w / 2, d.y + d.h / 2 + 14);
+      ctx.lineTo(d.x + d.w / 2 - 14, d.y + d.h / 2);
+      ctx.closePath();
+      ctx.fill();
+    } else if (d.kind === 'sconce') {
+      const glow = ctx.createRadialGradient(d.x, d.y, 2, d.x, d.y, 46);
+      glow.addColorStop(0, 'rgba(255, 200, 90, 0.5)');
+      glow.addColorStop(1, 'rgba(255, 200, 90, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 46, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#8a6d2f';
+      ctx.fillRect(d.x - 5, d.y - 8, 10, 16);
+      ctx.fillStyle = '#ffd94a';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y - 2, 5, 0, Math.PI * 2);
+      ctx.fill();
+    } else if (d.kind === 'plant') {
+      ctx.fillStyle = '#6b4a2a';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, 14, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#3f7a3f';
+      ctx.beginPath();
+      ctx.arc(d.x - 7, d.y - 6, 9, 0, Math.PI * 2);
+      ctx.arc(d.x + 7, d.y - 6, 9, 0, Math.PI * 2);
+      ctx.arc(d.x, d.y - 12, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#5aa85a';
+      ctx.beginPath();
+      ctx.arc(d.x, d.y - 8, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 }
 
 function drawExit(ctx, exit, game) {
@@ -65,13 +136,60 @@ function drawExit(ctx, exit, game) {
   ctx.strokeStyle = open ? '#2ecc71' : '#888';
   ctx.lineWidth = 3;
   ctx.strokeRect(exit.x, exit.y, exit.w, exit.h);
-  ctx.fillStyle = '#0d1a12';
-  ctx.font = 'bold 13px Georgia, serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(open ? 'EXIT OPEN' : 'EXIT', exit.x + exit.w / 2, exit.y + exit.h / 2 - 4);
-  ctx.font = '11px Georgia, serif';
-  ctx.fillText(exit.label, exit.x + exit.w / 2, exit.y + exit.h / 2 + 14);
   ctx.restore();
+  const cx = exit.x + exit.w / 2;
+  const midY = exit.y + exit.h / 2;
+  // Labels must sit inside the visible band (y 70..682): the DOM top bar
+  // covers y 0..64 and the bottom bar y 688..800, so text drawn inside a
+  // top-edge or bottom-edge exit rect is hidden behind the HUD. v1 lost
+  // "GRAND STAIR" to the top bar and "EXIT OPEN" to the bottom bar.
+  ctx.textAlign = 'center';
+  if (midY - 4 > 70 && midY + 14 < 682) {
+    // Mid-room exit: labels inside the rect, as before.
+    ctx.fillStyle = '#0d1a12';
+    ctx.font = 'bold 13px Georgia, serif';
+    ctx.fillText(open ? 'EXIT OPEN' : 'EXIT', cx, midY - 4);
+    ctx.font = '11px Georgia, serif';
+    ctx.fillText(exit.label, cx, midY + 14);
+  } else if (exit.y < 70) {
+    // Top-edge exit (Grand Stair): label below the rect AND below the
+    // banner band (y 84..~120), so it reads in the clear.
+    ctx.fillStyle = open ? '#7dff9e' : '#c8c8c8';
+    ctx.font = 'bold 13px Georgia, serif';
+    ctx.fillText(open ? 'EXIT OPEN' : 'EXIT', cx, exit.y + exit.h + 56);
+    ctx.fillStyle = '#e8d9a0';
+    ctx.font = '11px Georgia, serif';
+    ctx.fillText(exit.label, cx, exit.y + exit.h + 72);
+  } else {
+    // Bottom-edge exit (Escape Tunnel): a green pill just above the
+    // bottom bar, with an arrow pointing down at the exit below it.
+    const label = open ? 'EXIT OPEN' : 'EXIT';
+    ctx.font = 'bold 12px Georgia, serif';
+    const w1 = ctx.measureText(label).width;
+    ctx.font = '10px Georgia, serif';
+    const w2 = ctx.measureText(exit.label).width;
+    const pw = Math.max(w1, w2) + 24;
+    ctx.fillStyle = 'rgba(16, 48, 28, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(cx - pw / 2, 644, pw, 34, 6);
+    ctx.fill();
+    ctx.strokeStyle = open ? '#2ecc71' : '#888';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#7dff9e';
+    ctx.font = 'bold 12px Georgia, serif';
+    ctx.fillText(label, cx, 658);
+    ctx.fillStyle = '#e8d9a0';
+    ctx.font = '10px Georgia, serif';
+    ctx.fillText(exit.label, cx, 672);
+    ctx.fillStyle = open ? '#2ecc71' : '#888';
+    ctx.beginPath();
+    ctx.moveTo(cx - 6, 680);
+    ctx.lineTo(cx + 6, 680);
+    ctx.lineTo(cx, 686);
+    ctx.closePath();
+    ctx.fill();
+  }
 }
 
 function drawLoot(ctx, lootList, now) {
@@ -126,7 +244,10 @@ function drawLoot(ctx, lootList, now) {
     ctx.fillStyle = '#e8d9a0';
     ctx.font = '10px Georgia, serif';
     ctx.textAlign = 'center';
-    ctx.fillText(kind.label + '  $' + l.value, l.x, l.y + 30);
+    // A loot item near the bottom edge has its label hidden behind the
+    // bottom HUD bar — draw it above the item instead.
+    const ly = l.y + 30 > 680 ? l.y - 28 : l.y + 30;
+    ctx.fillText(kind.label + '  $' + l.value, l.x, ly);
   }
 }
 
@@ -301,41 +422,79 @@ function drawSmokes(ctx, smokes, now) {
 }
 
 function drawThief(ctx, thief, game, now) {
+  // Warm halo under Wren so she reads against the dark floor at a glance
+  // on a contact sheet. (v1's small dark circle vanished into the floor.)
+  const halo = ctx.createRadialGradient(thief.x, thief.y, 4, thief.x, thief.y, 36);
+  halo.addColorStop(0, 'rgba(255, 224, 102, 0.22)');
+  halo.addColorStop(1, 'rgba(255, 224, 102, 0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(thief.x, thief.y, 36, 0, Math.PI * 2);
+  ctx.fill();
   // Soft shadow ring while hidden in smoke.
   if (thief.hidden) {
     ctx.fillStyle = 'rgba(180,185,195,0.25)';
     ctx.beginPath();
-    ctx.arc(thief.x, thief.y, 20, 0, Math.PI * 2);
+    ctx.arc(thief.x, thief.y, 24, 0, Math.PI * 2);
     ctx.fill();
   }
-  // Wren: a hooded figure — dark cloak circle, hood point toward facing.
   ctx.save();
   ctx.translate(thief.x, thief.y);
   ctx.rotate(thief.facing);
-  ctx.fillStyle = '#0e0f16';
+  // Cloak: a violet cape flaring behind Wren, away from the facing.
+  ctx.fillStyle = '#5b2d8e';
   ctx.beginPath();
-  ctx.arc(0, 0, 12, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#7fd4c1';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  ctx.fillStyle = '#1d2f45';
-  ctx.beginPath();
-  ctx.moveTo(12, 0);
-  ctx.lineTo(-6, -9);
-  ctx.lineTo(-6, 9);
+  ctx.moveTo(-2, 0);
+  ctx.lineTo(-28, -15);
+  ctx.lineTo(-28, 15);
   ctx.closePath();
   ctx.fill();
+  ctx.strokeStyle = '#ffe066';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Wide-brim hat, seen from above: dark brim ring, violet crown.
+  ctx.fillStyle = '#1d1030';
+  ctx.beginPath();
+  ctx.arc(0, 0, 19, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffe066';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.fillStyle = '#7b4bc0';
+  ctx.beginPath();
+  ctx.arc(3, 0, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#ffe066';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  // Gold eyes, toward the facing.
   ctx.fillStyle = '#ffe066';
   ctx.beginPath();
-  ctx.arc(4, -4, 1.8, 0, Math.PI * 2);
-  ctx.arc(4, 4, 1.8, 0, Math.PI * 2);
+  ctx.arc(9, -4, 2, 0, Math.PI * 2);
+  ctx.arc(9, 4, 2, 0, Math.PI * 2);
   ctx.fill();
+  // Facing tick past the brim so the direction reads.
+  ctx.strokeStyle = '#ffe066';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(19, 0);
+  ctx.lineTo(26, 0);
+  ctx.stroke();
   ctx.restore();
+  // Name tag on a dark pill so it reads over any floor.
+  ctx.font = 'bold 11px Georgia, serif';
+  const tag = 'WREN' + (thief.sneaking ? ' · SNEAK' : '');
+  const tw = ctx.measureText(tag).width + 12;
+  ctx.fillStyle = 'rgba(10, 12, 20, 0.85)';
+  ctx.beginPath();
+  ctx.roundRect(thief.x - tw / 2, thief.y - 36, tw, 16, 5);
+  ctx.fill();
+  ctx.strokeStyle = '#7fd4c1';
+  ctx.lineWidth = 1;
+  ctx.stroke();
   ctx.fillStyle = '#a8f0e0';
-  ctx.font = 'bold 10px Georgia, serif';
   ctx.textAlign = 'center';
-  ctx.fillText('WREN' + (thief.sneaking ? ' · SNEAK' : ''), thief.x, thief.y - 20);
+  ctx.fillText(tag, thief.x, thief.y - 24);
   // Move target marker.
   if (thief.moveTarget) {
     ctx.strokeStyle = 'rgba(127, 212, 193, 0.8)';

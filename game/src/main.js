@@ -275,7 +275,9 @@ function stageShot(n) {
   const t = game.thief;
   if (n === 1) {
     // COVER: Vault, Wren crouched by the Star, a cone sweeping, alarm half.
-    t.x = 640; t.y = 470;
+    // Wren stands BELOW the lower laser (y 470), not on it (v1 put her on
+    // the beam).
+    t.x = 640; t.y = 500;
     t.lootValue = 1900; t.lootCount = 3;
     game.level.loot[0].taken = true; game.level.loot[1].taken = true;
     game.alarm = 55;
@@ -286,7 +288,8 @@ function stageShot(n) {
     setBanner('THE STAR IS RIGHT THERE — one cone between you and $5,000.', 99);
   } else if (n === 2) {
     // LOBBY: Wren behind the desk, Bram's cone sweeping, camera overhead.
-    t.x = 380; t.y = 340;
+    // v1 staged her ON the desk (380,340 is inside it) — moved below it.
+    t.x = 380; t.y = 400;
     t.sneaking = true;
     game.alarm = 18;
     game.guards[0].x = 640; game.guards[0].y = 300; game.guards[0].facing = 2.6;
@@ -295,8 +298,10 @@ function stageShot(n) {
     setBanner('MOTH: "Bram is turning. Move when the cone passes."', 99);
   } else if (n === 3) {
     // GALLERY: smoke deployed, Ilsa suspicious, one camera EMP'd, mid-lift.
-    t.x = 640; t.y = 380;
-    game.smokes.push({ x: 640, y: 380, r: SMOKE_RADIUS, born: game.now, life: SMOKE_TIME });
+    // v1 staged Wren ON the crown case with the smoke hiding the crown's
+    // label — Wren and the smoke sit below the case now, label in the clear.
+    t.x = 640; t.y = 470;
+    game.smokes.push({ x: 640, y: 470, r: SMOKE_RADIUS, born: game.now, life: SMOKE_TIME });
     t.hidden = true;
     t.lootValue = 800; t.lootCount = 2;
     game.level.loot[0].taken = true; game.level.loot[1].taken = true;
@@ -343,8 +348,8 @@ function runSelftest(kind) {
       // smoke when one gets close — the same tools a player has.
       const waypoints = [
         { room: 0, x: 330, y: 120, loot: true },   // painting
-        { room: 0, x: 1120, y: 700, loot: true },  // vase
-        { room: 0, x: 1220, y: 100 },              // exit
+        { room: 0, x: 1120, y: 640, loot: true },  // vase (moved up, was 700)
+        { room: 0, x: 990, y: 100 },               // exit (moved left, was 1220)
         // Gallery: PERIMETER route, not a diagonal — the wardens patrol
         // the centre, so hug the south wall, the east wall, then the top
         // corridor (north of both patrols) to the Grand Stair. Skip the

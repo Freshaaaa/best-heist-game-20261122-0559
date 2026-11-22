@@ -105,8 +105,11 @@ export function updateHud(game, now) {
     : 'MOVING — stay out of the cones';
 
   // Banner for big moments.
+  // (v2 fix: the old code overwrote className with 'banner show', dropping
+  // the 'hud' class that positions it — the banner rendered as a static
+  // strip hidden behind the top bar and never showed.)
   els.banner.textContent = game.banner || '';
-  els.banner.className = 'banner' + (game.banner ? ' show' : '');
+  els.banner.className = 'hud banner' + (game.banner ? ' show' : '');
 
   drawMinimap(game);
 }

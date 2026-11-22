@@ -33,7 +33,10 @@ export const LEVELS = [
     subtitle: 'The Meridian Museum — ground floor',
     brief: 'Slip past Warden Bram, lift the lobby loot, and reach the service door.',
     playerStart: { x: 90, y: 700 },
-    exit: { x: 1180, y: 60, w: 80, h: 90, label: 'SERVICE DOOR' },
+    // The exit used to sit at x 1180, behind the right HUD panel (which
+    // covers x 1040..1272, y 72..~320) — its rect and labels were hidden.
+    // Moved left into the clear band; same room, same function.
+    exit: { x: 950, y: 60, w: 80, h: 90, label: 'SERVICE DOOR' },
     walls: [
       wall(0, 0, 1280, 24), wall(0, 776, 1280, 24),
       wall(0, 0, 24, 800), wall(1256, 0, 24, 800),
@@ -46,6 +49,19 @@ export const LEVELS = [
       cover(980, 420, 110, 70, 'plant'),
       cover(560, 520, 150, 60, 'case'),
     ],
+    // Museum dressing: visual only, never blocks movement or sight.
+    // Placed in the clear band the HUD leaves open (y 128..682, clear of
+    // the patrol lines and the side panels).
+    decor: [
+      { kind: 'painting', x: 470, y: 140, w: 110, h: 40, color: '#c96f4a' },
+      { kind: 'painting', x: 40, y: 420, w: 130, h: 50, color: '#7fb069' },
+      { kind: 'painting', x: 1100, y: 400, w: 130, h: 50, color: '#4a7fc9' },
+      { kind: 'rug', x: 280, y: 430, w: 170, h: 100 },
+      { kind: 'sconce', x: 30, y: 300 },
+      { kind: 'sconce', x: 1250, y: 300 },
+      { kind: 'plant', x: 60, y: 640 },
+      { kind: 'plant', x: 1220, y: 640 },
+    ],
     guards: [
       guard('Bram', [[640, 420], [640, 180], [980, 180], [980, 560], [400, 560], [400, 300]], 1.4),
     ],
@@ -55,7 +71,9 @@ export const LEVELS = [
     lasers: [],
     loot: [
       loot(330, 120, 'painting'),
-      loot(1120, 700, 'vase'),
+      // The vase used to sit at y 700, behind the bottom HUD bar — its
+      // circle and label were both clipped. Moved up into the clear band.
+      loot(1120, 640, 'vase'),
       loot(760, 150, 'painting'),
     ],
     handler: 'MOTH: "Lobby is quiet. One warden, one camera. Grab what you can — the door top-right is your way out."',
@@ -79,6 +97,17 @@ export const LEVELS = [
       cover(200, 600, 150, 60, 'bench'),
       cover(930, 600, 150, 60, 'bench'),
       cover(600, 620, 80, 80, 'statue'),
+    ],
+    decor: [
+      { kind: 'painting', x: 280, y: 128, w: 110, h: 38, color: '#c96f4a' },
+      { kind: 'painting', x: 890, y: 128, w: 110, h: 38, color: '#4a7fc9' },
+      { kind: 'painting', x: 40, y: 420, w: 130, h: 50, color: '#7fb069' },
+      { kind: 'painting', x: 1100, y: 400, w: 130, h: 50, color: '#d8a24a' },
+      { kind: 'rug', x: 380, y: 470, w: 170, h: 100 },
+      { kind: 'sconce', x: 30, y: 300 },
+      { kind: 'sconce', x: 1250, y: 300 },
+      { kind: 'plant', x: 60, y: 640 },
+      { kind: 'plant', x: 1220, y: 640 },
     ],
     guards: [
       guard('Ilsa', [[200, 420], [200, 180], [640, 180], [640, 420]], 1.2),
@@ -114,6 +143,17 @@ export const LEVELS = [
       cover(200, 580, 150, 60, 'case'),
       cover(930, 580, 150, 60, 'case'),
       cover(600, 380, 80, 80, 'pedestal'),
+    ],
+    decor: [
+      { kind: 'painting', x: 280, y: 645, w: 110, h: 38, color: '#c96f4a' },
+      { kind: 'painting', x: 1080, y: 645, w: 110, h: 38, color: '#4a7fc9' },
+      { kind: 'painting', x: 40, y: 420, w: 130, h: 50, color: '#7fb069' },
+      { kind: 'painting', x: 1100, y: 400, w: 130, h: 50, color: '#d8a24a' },
+      { kind: 'rug', x: 300, y: 480, w: 150, h: 90 },
+      { kind: 'sconce', x: 30, y: 300 },
+      { kind: 'sconce', x: 1250, y: 300 },
+      { kind: 'plant', x: 60, y: 640 },
+      { kind: 'plant', x: 1220, y: 640 },
     ],
     guards: [
       guard('Bram', [[300, 420], [300, 150], [980, 150], [980, 420]], 0.9),
